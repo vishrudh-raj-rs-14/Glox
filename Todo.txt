@@ -1,0 +1,8 @@
+break
+continue
+mod
++=
+-=
+implicit ;
+lists
+map
