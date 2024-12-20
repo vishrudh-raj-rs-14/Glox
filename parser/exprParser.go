@@ -32,7 +32,15 @@ func (parser *Parser) assignment() (expr.Expr, error) {
                 Name:  variable.Token, 
                 Value: value,         
             }, nil
-        }
+        }else{
+			if variable, ok := expression.(*expr.GetExpr); ok {
+				return &expr.SetExpr{
+					Name: variable.Name,
+					Object: variable.Object,
+					Value: value,      
+				}, nil
+			}
+		}
 		errorhandler.ErrorToken(equals, "Invalid assignment type");
 		return nil, fmt.Errorf("Invalid assignment type");
 	}
@@ -186,6 +194,16 @@ func (parser *Parser) call() (expr.Expr, error) {
 				return nil, err;
 			}
 			callee = val;
+		}else if(parser.match(token.DOT)){
+			if(!parser.check(token.IDENTIFIER)){
+				errorhandler.ErrorToken(parser.peek(), "Expected Identifier")
+				return nil, fmt.Errorf("Expected Identifier")
+			}
+			name := parser.advance();
+			callee = &expr.GetExpr{
+				Name: name,
+				Object: callee,
+			}
 		}else{
 			break;
 		}
@@ -194,6 +212,7 @@ func (parser *Parser) call() (expr.Expr, error) {
 	return callee, nil;
 
 }
+
 
 func (parser *Parser) finishCall(callee expr.Expr) (expr.Expr, error) {
     var arguments []expr.Expr
@@ -238,6 +257,10 @@ func (parser *Parser) primary() (expr.Expr, error) {
 
 	if parser.match(token.NIL) {
 		return &expr.Literal{Value: nil}, nil
+	}
+
+	if(parser.match(token.THIS)){
+		return &expr.This{Keyword: parser.previous()}, nil;
 	}
 
 	if parser.match(token.IDENTIFIER) {

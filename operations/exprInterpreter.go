@@ -17,6 +17,16 @@ func (interpret Interpreter) Evaluate(expr expr.Expr) interface{}{
 	return expr.Accept(interpret);
 }
 
+
+func (interpret Interpreter) VisitThisxpr(expr *expr.This) interface{} {
+	val, err := interpret.variableLookup(expr.Keyword, expr);
+	if(err!=nil){
+		return nil;
+	}
+	return val;
+}
+
+
 func (interpret Interpreter) VisitCallxpr(expr *expr.Call) interface{} {
 	callee := interpret.Evaluate(expr.Callee);
 	var arguments []interface{};
@@ -185,6 +195,27 @@ func (interpret Interpreter) VisitLogicalxpr(expr *expr.Logical) interface{} {
 			return interpret.Evaluate(expr.Right);
 		}
 	}
+}
+
+func (interpret Interpreter) VisitGetxpr(expr *expr.GetExpr) interface{} {
+	val := interpret.Evaluate(expr.Object);
+	ClassVal, ok := val.(*Instance);
+	if(!ok || ClassVal==nil){
+		errorhandler.ErrorToken(expr.Name, "Only instances can have properties");
+		return nil;
+	}
+	return ClassVal.Get(expr.Name);
+}
+
+func (interpret Interpreter) VisitSetxpr(expr *expr.SetExpr) interface{} {
+	val := interpret.Evaluate(expr.Object);
+	ClassVal, ok := val.(*Instance);
+	if(!ok || ClassVal==nil){
+		errorhandler.ErrorToken(expr.Name, "Only instances can have properties");
+		return nil;
+	}
+	ClassVal.Set(expr.Name, interpret.Evaluate(expr.Value));
+	return interpret.Evaluate(expr.Value)
 }
 
 func (interpreter Interpreter) variableLookup(name token.Token, expr expr.Expr) (interface{}, error){

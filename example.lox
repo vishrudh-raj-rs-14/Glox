@@ -1,31 +1,57 @@
-fun isSquareRoot(n) {
-  var i = 1;
-  while (i * i <= n) {
-    if (i * i == n) return 1;
-    i = i + 1;
+class CoffeeMachine {
+  init() {
+    this.waterLevel = 0;
+    this.coffeeBeansLevel = 0;
+    this.maxCapacity = 100;
   }
-  return 0;
+
+  addWater(amount) {
+    if (this.waterLevel + amount > this.maxCapacity) {
+      print "Cannot add that much water. Maximum capacity is " + this.maxCapacity;
+      return;
+    }
+    this.waterLevel = this.waterLevel + amount;
+    print "Water level is now: " + this.waterLevel;
+  }
+
+  addCoffeeBeans(amount) {
+    if (this.coffeeBeansLevel + amount > this.maxCapacity) {
+      print "Cannot add that many coffee beans. Maximum capacity is " + this.maxCapacity;
+      return;
+    }
+    this.coffeeBeansLevel = this.coffeeBeansLevel + amount;
+    print "Coffee beans level is now: " + this.coffeeBeansLevel;
+  }
+
+  makeCoffee() {
+    if (this.waterLevel < 10) {
+      print "Not enough water!";
+      return;
+    }
+    if (this.coffeeBeansLevel < 5) {
+      print "Not enough coffee beans!";
+      return;
+    }
+    this.waterLevel = this.waterLevel - 10;
+    this.coffeeBeansLevel = this.coffeeBeansLevel - 5;
+    print "Coffee made! ☕";
+    print "Water remaining: " + this.waterLevel;
+    print "Coffee beans remaining: " + this.coffeeBeansLevel;
+  }
 }
 
-fun isPrime(n) {
-  if (n <= 1) return 0;
-  if (n <= 3) return 1;
-  if (n % 2 == 0) return 0;
-  
-  var i = 3;
-  while (i * i <= n) {
-    if (n % i == 0) return 0;
-    i = i + 2;
-  }
-  return 1;
-}
+var machine = CoffeeMachine();
+machine.makeCoffee();          // Output: Not enough water!
 
-var num = 2;
-var count = 0;
-while (count < 100) {
-  if (isPrime(num)) {
-    print num;
-    count = count + 1;
-  }
-  num = num + 1;
-}
+machine.addWater(50);          // Output: Water level is now: 50
+machine.addCoffeeBeans(20);    // Output: Coffee beans level is now: 20
+
+machine.makeCoffee();          // Output: Coffee made! ☕
+                              // Output: Water remaining: 40
+                              // Output: Coffee beans remaining: 15
+
+machine.makeCoffee();          // Output: Coffee made! ☕
+                              // Output: Water remaining: 30
+                              // Output: Coffee beans remaining: 10
+
+machine.addWater(80);          // Output: Cannot add that much water. Maximum capacity is 100

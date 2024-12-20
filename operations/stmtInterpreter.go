@@ -11,17 +11,15 @@ import (
 )
 
 type Interpreter struct {
-	Env environment.Environment
+	Env  environment.Environment
 	vars map[expr.Expr]int
 }
-
 
 
 func CreateInterpreter() Interpreter {
 	interpreter := Interpreter{
 		Env: environment.Environment{
 			Values: make(map[string]interface{}),
-			
 		},
 		vars: map[expr.Expr]int{},
 	}
@@ -40,25 +38,47 @@ func (interpret Interpreter) Interpret(statements []stmt.Stmt) {
 }
 
 func (interpreter Interpreter) Resolve(expr expr.Expr, level int) {
-	interpreter.vars[expr] = level;
+	interpreter.vars[expr] = level
 }
 
 func (interpreter Interpreter) Execute(statement stmt.Stmt) {
-	if(statement==nil){
-		return;
+	if statement == nil {
+		return
 	}
 	statement.Accept(interpreter)
 }
 
+// VisitClassStmt implements stmt.StmtVisitor.
+func (interpret Interpreter) VisitClassStmt(stmt *stmt.ClassStmt) interface{} {
+	interpret.Env.Define(stmt.Name.Lexeme, nil)
+
+	methods := make(map[string]*Function)
+	for _, method := range stmt.Methods {
+		methods[method.Name.Lexeme] = &Function{
+			parameterCount:      len(method.Parameters),
+			FunctionDeclaration: method,
+			Closure:             interpret.Env,
+			IsInitializer: (method.Name.Lexeme=="init"),
+		}
+	}
+
+	klass := &Class{
+		Name:    stmt.Name,
+		Methods: methods,
+	}
+	interpret.Env.Assign(stmt.Name, klass)
+	return nil
+}
+
 func (interpret Interpreter) VisitReturnStmt(stmt *stmt.Return) interface{} {
-	val := interpret.Evaluate(stmt.Expression);
-	panic(Return{Value: val});
+	val := interpret.Evaluate(stmt.Expression)
+	panic(Return{Value: val})
 }
 
 func (interpret Interpreter) VisitFunStmt(stmt *stmt.FunStmt) interface{} {
 	function := Function{
 		FunctionDeclaration: *stmt,
-		Closure: interpret.Env,
+		Closure:             interpret.Env,
 		parameterCount:      len(stmt.Parameters),
 	}
 	interpret.Env.Define(stmt.Name.Lexeme, &function)

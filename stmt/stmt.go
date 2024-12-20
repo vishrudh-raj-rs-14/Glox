@@ -14,5 +14,6 @@ type StmtVisitor interface{
 	VisitWhileStmt(stmt *WhileStmt) interface{}
 	VisitFunStmt(stmt *FunStmt) interface{}
 	VisitReturnStmt(stmt *Return) interface{}
+	VisitClassStmt(stmt *ClassStmt) interface{}
 }
 

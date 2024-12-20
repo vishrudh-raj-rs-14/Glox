@@ -14,5 +14,8 @@ type ExprVisitor interface{
 	VisitAssignxpr(expr *Assign) interface{}
 	VisitLogicalxpr(expr *Logical) interface{}
 	VisitCallxpr(expr *Call) interface{}
+	VisitGetxpr(expr *GetExpr) interface{}
+	VisitSetxpr(expr *SetExpr) interface{}
+	VisitThisxpr(expr *This) interface{}
 }
 

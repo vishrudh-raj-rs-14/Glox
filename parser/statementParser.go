@@ -14,6 +14,8 @@ func (parser *Parser) declaration() (stmt.Stmt, error){
 	var statement stmt.Stmt;
 	if(parser.match(token.VAR)){
 		statement, err = parser.varDeclaration();
+	}else if(parser.match(token.CLASS)){
+		statement, err = parser.classDeclaration();
 	}else{
 		statement, err = parser.statement();
 	}
@@ -24,6 +26,43 @@ func (parser *Parser) declaration() (stmt.Stmt, error){
 	}
 }
 
+func (parser *Parser) classDeclaration() (stmt.Stmt, error){
+	if(!parser.check(token.IDENTIFIER)){
+		errorhandler.ErrorToken(parser.peek(), "Expected identifier after class declaration");
+		return nil, fmt.Errorf("Expected identifier after class declaration")
+	}
+
+	name := parser.advance();
+
+	err := parser.consume(token.LEFT_BRACE, "Expected { after identifier");
+	if(err!=nil){
+		return nil, err;
+	}
+	methods := make([]stmt.FunStmt, 0);
+	for;!parser.check(token.RIGHT_BRACE) && !parser.endOfFile();{
+		val, err := parser.function();
+		if(err!=nil){
+			return nil, err;
+		}
+		funStmt, ok := val.(*stmt.FunStmt)
+		if(!ok){
+			errorhandler.ErrorToken(parser.peek(), "Something went wrong")
+			return nil, fmt.Errorf("Something went wrong");
+		}
+		methods = append(methods, *funStmt);
+	}
+	err = parser.consume(token.RIGHT_BRACE, "Expected } at the end of class");
+	if(err!=nil){
+		return nil, err;
+	}
+
+	return &stmt.ClassStmt{
+		Name: name,
+		Methods: methods,
+	}, nil
+
+
+}
 
 func (parser *Parser) varDeclaration() (stmt.Stmt, error){
 		

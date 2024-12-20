@@ -7,16 +7,28 @@ import (
 )
 
 type PrettyPrint struct {
-	
 }
 
+// VisitThisxpr implements expr.ExprVisitor.
+func (p PrettyPrint) VisitThisxpr(expr *expr.This) interface{} {
+	return "this"
+}
+
+// VisitGetxpr implements expr.ExprVisitor.
+func (p PrettyPrint) VisitGetxpr(expr *expr.GetExpr) interface{} {
+	return p.parenthezise(expr.Name.Lexeme+" of ", expr.Object)
+}
+
+func (p PrettyPrint) VisitSetxpr(expr *expr.SetExpr) interface{} {
+	return p.parenthezise(expr.Name.Lexeme+" of ", expr.Object, expr.Value)
+}
 
 func (p PrettyPrint) Print(expr expr.Expr) string {
 	return fmt.Sprintf("%v", expr.Accept(p))
 }
 
 func (p PrettyPrint) VisitCallxpr(expr *expr.Call) interface{} {
-	return p.parenthezise("functionCall", append(expr.Arguments, expr.Callee)...);
+	return p.parenthezise("functionCall", append(expr.Arguments, expr.Callee)...)
 }
 
 func (p PrettyPrint) VisitLogicalxpr(expr *expr.Logical) interface{} {

@@ -9,6 +9,7 @@ type Function struct{
 	FunctionDeclaration stmt.FunStmt
 	Closure environment.Environment
 	parameterCount int
+	IsInitializer bool
 }
 
 
@@ -32,6 +33,10 @@ func (function *Function) Call(interpreterVal interface{}, arguments []interface
 	res = nil;
 	defer func() {
 		if r := recover(); r != nil {
+			if(function.IsInitializer){
+				val, _ := function.Closure.GetAt(0, "this");
+				res = val;
+			}
 			// fmt.Println(r);
 			if returnValue, ok := r.(Return); ok {
 				res = returnValue.Value
@@ -40,9 +45,28 @@ func (function *Function) Call(interpreterVal interface{}, arguments []interface
 	}()
 
 	interpreter.ExecuteBlock(&function.FunctionDeclaration.Body, &newEnvironment);
+	if(function.IsInitializer){
+		val, _ := function.Closure.GetAt(0, "this");
+		return val;
+	}
 	return;
 
 }
+
+func (fun *Function) Bind(instance *Instance) *Function{
+	environment := environment.Environment{
+		Values: make(map[string]interface{}),
+		Enclosing: &fun.Closure,
+	}
+	environment.Define("this", instance);
+	return &Function{
+		FunctionDeclaration: fun.FunctionDeclaration,
+		parameterCount: len(fun.FunctionDeclaration.Parameters),
+		Closure: environment,
+		IsInitializer: fun.IsInitializer,
+	}
+}
+
 
 func (function *Function) Arity() int{
 	return function.parameterCount
