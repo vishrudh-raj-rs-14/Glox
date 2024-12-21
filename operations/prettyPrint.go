@@ -9,6 +9,11 @@ import (
 type PrettyPrint struct {
 }
 
+// VisitSuperxpr implements expr.ExprVisitor.
+func (p PrettyPrint) VisitSuperxpr(expr *expr.Super) interface{} {
+	return "super"
+}
+
 // VisitThisxpr implements expr.ExprVisitor.
 func (p PrettyPrint) VisitThisxpr(expr *expr.This) interface{} {
 	return "this"

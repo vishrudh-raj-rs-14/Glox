@@ -16,6 +16,7 @@ type Interpreter struct {
 }
 
 
+
 func CreateInterpreter() Interpreter {
 	interpreter := Interpreter{
 		Env: environment.Environment{
@@ -52,19 +53,46 @@ func (interpreter Interpreter) Execute(statement stmt.Stmt) {
 func (interpret Interpreter) VisitClassStmt(stmt *stmt.ClassStmt) interface{} {
 	interpret.Env.Define(stmt.Name.Lexeme, nil)
 
+	var superClass interface{} = nil;
+	var superClassIns *Class = nil;
+	if stmt.SuperClass != nil {
+		superClass = interpret.Evaluate(stmt.SuperClass)
+		var ok bool
+		superClassIns, ok = superClass.(*Class)
+		if !ok {
+			errorhandler.ErrorToken(stmt.SuperClass.Token, "A class can only inherit from another class")
+			return nil
+		}
+	}
+
+	if stmt.SuperClass != nil {
+		cur := interpret.Env
+		env := environment.Environment{
+			Values:    make(map[string]interface{}),
+			Enclosing: &cur,
+		}
+		env.Define("super", superClass)
+		interpret.Env = env
+	}
+
 	methods := make(map[string]*Function)
 	for _, method := range stmt.Methods {
 		methods[method.Name.Lexeme] = &Function{
 			parameterCount:      len(method.Parameters),
 			FunctionDeclaration: method,
 			Closure:             interpret.Env,
-			IsInitializer: (method.Name.Lexeme=="init"),
+			IsInitializer:       (method.Name.Lexeme == "init"),
 		}
+	}
+	if(stmt.SuperClass!=nil){
+		interpret.Env = *interpret.Env.Enclosing
+
 	}
 
 	klass := &Class{
-		Name:    stmt.Name,
-		Methods: methods,
+		Name:       stmt.Name,
+		Methods:    methods,
+		SuperClass: superClassIns,
 	}
 	interpret.Env.Assign(stmt.Name, klass)
 	return nil

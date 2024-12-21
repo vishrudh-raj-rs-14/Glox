@@ -31,9 +31,19 @@ func (parser *Parser) classDeclaration() (stmt.Stmt, error){
 		errorhandler.ErrorToken(parser.peek(), "Expected identifier after class declaration");
 		return nil, fmt.Errorf("Expected identifier after class declaration")
 	}
-
+	var super *expr.Variable = nil;
 	name := parser.advance();
-
+	if(parser.match(token.LESS)){
+		if(!parser.check(token.IDENTIFIER)){
+			errorhandler.ErrorToken(parser.peek(), "Expected identifier after < in class declaration");
+			return nil, fmt.Errorf("Expected identifier after < in class declaration");
+		}
+		variable := parser.advance();
+		super = &expr.Variable{
+			Name: variable.Lexeme,
+			Token: variable,
+		}
+	}
 	err := parser.consume(token.LEFT_BRACE, "Expected { after identifier");
 	if(err!=nil){
 		return nil, err;
@@ -59,6 +69,7 @@ func (parser *Parser) classDeclaration() (stmt.Stmt, error){
 	return &stmt.ClassStmt{
 		Name: name,
 		Methods: methods,
+		SuperClass: super,
 	}, nil
 
 

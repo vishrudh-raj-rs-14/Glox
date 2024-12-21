@@ -18,6 +18,37 @@ func (interpret Interpreter) Evaluate(expr expr.Expr) interface{}{
 }
 
 
+func (interpret Interpreter) VisitSuperxpr(expr *expr.Super) interface{} {
+	dist := interpret.vars[expr];
+	klass, err := interpret.Env.GetAt(dist, "super");
+	if(err!=nil){
+		return nil
+	}
+	klassType, ok := klass.(*Class);
+	if(!ok){
+		errorhandler.ErrorToken(expr.Keyword, "Something went wrong");
+		return nil;
+	}
+
+	klassIns, err := interpret.Env.GetAt(dist-1, "this");
+	if(err!=nil){
+		return nil
+	}
+	klassInstance, ok := klassIns.(*Instance);
+	if(!ok){
+		errorhandler.ErrorToken(expr.Keyword, "Something went wrong");
+		return nil;
+	}
+	method := klassType.FindMethod(expr.Method.Lexeme);
+
+	if(method==nil){
+		errorhandler.ErrorToken(expr.Method, "Cant find method in super class");
+		return nil;
+	}
+	return method.Bind(klassInstance);
+
+}
+
 func (interpret Interpreter) VisitThisxpr(expr *expr.This) interface{} {
 	val, err := interpret.variableLookup(expr.Keyword, expr);
 	if(err!=nil){

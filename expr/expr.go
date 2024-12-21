@@ -17,5 +17,6 @@ type ExprVisitor interface{
 	VisitGetxpr(expr *GetExpr) interface{}
 	VisitSetxpr(expr *SetExpr) interface{}
 	VisitThisxpr(expr *This) interface{}
+	VisitSuperxpr(expr *Super) interface{}
 }
 

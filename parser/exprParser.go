@@ -263,6 +263,23 @@ func (parser *Parser) primary() (expr.Expr, error) {
 		return &expr.This{Keyword: parser.previous()}, nil;
 	}
 
+	if(parser.match(token.SUPER)){
+		keyword := parser.previous();
+		err := parser.consume(token.DOT, "Super cannot be used alone");
+		if(err!=nil){
+			return nil, err;
+		}
+		if(!parser.check(token.IDENTIFIER)){
+			errorhandler.ErrorToken(parser.peek(), "Method of super must be a identifier");
+			return nil, fmt.Errorf("Method of super must be a identifier");
+		}
+		method := parser.advance();
+		return &expr.Super{
+			Keyword: keyword,
+			Method: method,
+		}, nil
+	}
+
 	if parser.match(token.IDENTIFIER) {
 		return &expr.Variable{Name: parser.previous().Lexeme, Token: parser.previous()}, nil
 	}

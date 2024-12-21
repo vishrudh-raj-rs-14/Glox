@@ -1,57 +1,7 @@
-class CoffeeMachine {
-  init() {
-    this.waterLevel = 0;
-    this.coffeeBeansLevel = 0;
-    this.maxCapacity = 100;
-  }
-
-  addWater(amount) {
-    if (this.waterLevel + amount > this.maxCapacity) {
-      print "Cannot add that much water. Maximum capacity is " + this.maxCapacity;
-      return;
-    }
-    this.waterLevel = this.waterLevel + amount;
-    print "Water level is now: " + this.waterLevel;
-  }
-
-  addCoffeeBeans(amount) {
-    if (this.coffeeBeansLevel + amount > this.maxCapacity) {
-      print "Cannot add that many coffee beans. Maximum capacity is " + this.maxCapacity;
-      return;
-    }
-    this.coffeeBeansLevel = this.coffeeBeansLevel + amount;
-    print "Coffee beans level is now: " + this.coffeeBeansLevel;
-  }
-
-  makeCoffee() {
-    if (this.waterLevel < 10) {
-      print "Not enough water!";
-      return;
-    }
-    if (this.coffeeBeansLevel < 5) {
-      print "Not enough coffee beans!";
-      return;
-    }
-    this.waterLevel = this.waterLevel - 10;
-    this.coffeeBeansLevel = this.coffeeBeansLevel - 5;
-    print "Coffee made! ☕";
-    print "Water remaining: " + this.waterLevel;
-    print "Coffee beans remaining: " + this.coffeeBeansLevel;
+class Eclair {
+  cook() {
+    super.cook();
+    print "Pipe full of crème pâtissière.";
   }
 }
-
-var machine = CoffeeMachine();
-machine.makeCoffee();          // Output: Not enough water!
-
-machine.addWater(50);          // Output: Water level is now: 50
-machine.addCoffeeBeans(20);    // Output: Coffee beans level is now: 20
-
-machine.makeCoffee();          // Output: Coffee made! ☕
-                              // Output: Water remaining: 40
-                              // Output: Coffee beans remaining: 15
-
-machine.makeCoffee();          // Output: Coffee made! ☕
-                              // Output: Water remaining: 30
-                              // Output: Coffee beans remaining: 10
-
-machine.addWater(80);          // Output: Cannot add that much water. Maximum capacity is 100
+super();

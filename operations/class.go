@@ -8,6 +8,7 @@ import (
 type Class struct{
 	Name token.Token
 	Methods map[string]*Function
+	SuperClass *Class
 }
 
 
@@ -22,7 +23,14 @@ func (klass *Class) Call(interpreterVal interface{}, arguments []interface{}) (r
 }
 
 func (klass *Class) FindMethod(name string) *Function{
-	return klass.Methods[name];
+	val, ok:= klass.Methods[name];
+	if(!ok){
+		if(klass.SuperClass==nil){
+			return nil;
+		}
+		return klass.SuperClass.FindMethod(name);
+	}
+	return val;
 }
 
 func (klass *Class) Arity() int{

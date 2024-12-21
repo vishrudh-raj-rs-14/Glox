@@ -1,6 +1,8 @@
 package resolver
 
 import (
+	"fmt"
+
 	errorhandler "github.com/vishrudh-raj-rs-14/lox/errorHandler"
 	"github.com/vishrudh-raj-rs-14/lox/expr"
 	"github.com/vishrudh-raj-rs-14/lox/operations"
@@ -22,15 +24,15 @@ type ClassType int
 const (
 	NONECLASS ClassType = iota
 	CLASS
+	SUBCLASS
 )
 
 type Resolver struct {
 	interpreter     operations.Interpreter
 	currentFunction FunctionType
-	currentClass ClassType
+	currentClass    ClassType
 	scopes          []map[string]bool
 }
-
 
 
 func CreateResolver(interpreter operations.Interpreter) *Resolver {
@@ -39,7 +41,7 @@ func CreateResolver(interpreter operations.Interpreter) *Resolver {
 	return &Resolver{
 		interpreter:     interpreter,
 		currentFunction: NONE,
-		currentClass: NONECLASS,
+		currentClass:    NONECLASS,
 		scopes:          scopes,
 	}
 }
@@ -85,14 +87,27 @@ func (resolver *Resolver) isEmpty() bool {
 }
 
 
-// VisitThisxpr implements expr.ExprVisitor.
-func (resolver *Resolver) VisitThisxpr(expr *expr.This) interface{} {
+// VisitSuperxpr implements expr.ExprVisitor.
+func (resolver *Resolver) VisitSuperxpr(expr *expr.Super) interface{} {
 	if(resolver.currentClass==NONECLASS){
-		errorhandler.ErrorToken(expr.Keyword, "'this' can be used only inside a class")
-		return  nil;
+		errorhandler.ErrorToken(expr.Keyword, "Can't use 'super' outside of a class.")
+		return nil;
+	}else if(resolver.currentClass==SUBCLASS){
+		errorhandler.ErrorToken(expr.Keyword, "Can't use 'super' in a class with no superclass.")
+		return nil;
 	}
 	resolver.resolveLocal(expr, expr.Keyword);
 	return nil;
+}
+
+// VisitThisxpr implements expr.ExprVisitor.
+func (resolver *Resolver) VisitThisxpr(expr *expr.This) interface{} {
+	if resolver.currentClass == NONECLASS {
+		errorhandler.ErrorToken(expr.Keyword, "'this' can be used only inside a class")
+		return nil
+	}
+	resolver.resolveLocal(expr, expr.Keyword)
+	return nil
 }
 
 func (resolver *Resolver) VisitGetxpr(expr *expr.GetExpr) interface{} {
@@ -124,7 +139,7 @@ func (resolvar *Resolver) VisitBinaryExpr(expr *expr.Binary) interface{} {
 // VisitCallxpr implements expr.ExprVisitor.
 func (resolvar *Resolver) VisitCallxpr(expr *expr.Call) interface{} {
 	resolvar.resolveExpr(expr.Callee)
-	
+
 	for _, argument := range expr.Arguments {
 		resolvar.resolveExpr(argument)
 	}
@@ -177,6 +192,7 @@ func (resolvar *Resolver) resolveLocal(expr expr.Expr, name token.Token) {
 		}
 	}
 	if !done {
+		fmt.Println(name.TokenType)
 		errorhandler.ErrorToken(name, "Variable used without declaration")
 	}
 
@@ -200,20 +216,36 @@ func (resolvar *Resolver) resolveFuntion(fun *stmt.FunStmt, functionType Functio
 // VisitClassStmt implements stmt.StmtVisitor.
 func (resolver *Resolver) VisitClassStmt(stmt *stmt.ClassStmt) interface{} {
 	cur := resolver.currentClass
-	resolver.currentClass = CLASS;
+	resolver.currentClass = CLASS
 	resolver.declare(stmt.Name)
 	resolver.define(stmt.Name)
-	resolver.beginScope();
-	resolver.peek()["this"] = true;
+
+	if stmt.SuperClass != nil {
+		if stmt.Name.Lexeme == stmt.SuperClass.Name {
+			errorhandler.ErrorToken(stmt.SuperClass.Token, "A class cant be inherited to itself")
+		} else {
+			resolver.resolveExpr(stmt.SuperClass)
+		}
+	}
+	if stmt.SuperClass != nil {
+		resolver.currentClass=SUBCLASS
+		resolver.beginScope()
+		resolver.peek()["super"] = true
+	}
+	resolver.beginScope()
+	resolver.peek()["this"] = true
 	for _, method := range stmt.Methods {
-		funType := METHOD;
-		if(method.Name.Lexeme=="init"){
-			funType=INITIALIZER
+		funType := METHOD
+		if method.Name.Lexeme == "init" {
+			funType = INITIALIZER
 		}
 		resolver.resolveFuntion(&method, funType)
 	}
+	if stmt.SuperClass != nil {
+		resolver.endScope()
+	}
 	resolver.endScope()
-	resolver.currentClass=cur
+	resolver.currentClass = cur
 	return nil
 }
 
@@ -261,10 +293,10 @@ func (resolvar *Resolver) VisitReturnStmt(stmt *stmt.Return) interface{} {
 		errorhandler.ErrorToken(stmt.Keyword, "Cant return from top level")
 		return nil
 	}
-	if(stmt.Expression!=nil){
-		if(resolvar.currentFunction==INITIALIZER){
+	if stmt.Expression != nil {
+		if resolvar.currentFunction == INITIALIZER {
 			errorhandler.ErrorToken(stmt.Keyword, "Cant return from constructor")
-		return nil
+			return nil
 		}
 	}
 	resolvar.resolveExpr(stmt.Expression)

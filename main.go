@@ -58,7 +58,6 @@ func runPrompt(){
 
 
 func run(code string, interpreter operations.Interpreter){
-
 	scanner := scanner.CreateScanner(code);
 	tokens := scanner.ScanTokens();
 	gloxParser := parser.CreateParser(tokens);
